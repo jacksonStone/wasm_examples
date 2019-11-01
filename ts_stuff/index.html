@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>AssemblyScript wasm</title>
+</head>
+
+<body>
+	<!--
+	Add the following polyfill for Microsoft Edge 17/18 support:
+	<script src="https://cdn.jsdelivr.net/npm/text-encoding@0.7.0/lib/encoding.min.js"></script>
+	(see https://caniuse.com/#feat=textencoder)
+	-->
+	<script>
+
+        WebAssembly.instantiateStreaming = async (resp, importObject) => {
+            const source = await (await resp).arrayBuffer();
+            return await WebAssembly.instantiate(source, importObject);
+        };
+
+
+
+
+        let mod, inst;
+        const toBeImported = {
+            env: {
+                evalInJS: function(offset, length) {
+                    function ab2str(buf) {
+                        const u16List = [];
+                        for(let i = 0; i < buf.length; i+=2) {
+                            u16List.push(buf[i] +  buf[i + 1]);
+                        }
+                        return String.fromCharCode.apply(null, u16List);
+                    }
+                    const buf = new Uint8Array(inst.exports.memory.buffer);
+                    window.eval(ab2str(buf.slice(offset, offset + length * 2)));
+                },
+                abort: () => {
+                    console.log("Called abort");
+                }
+            }
+        }
+
+		WebAssembly.instantiateStreaming(fetch("./build/optimized.wasm"), toBeImported).then((result) => {
+			mod = result.module;
+            inst = result.instance;
+            const funcResult = inst.exports.fib(22);
+            console.log("Function result from Assembly script: ", funcResult);
+            inst.exports.main();
+		}).catch((err) => {
+			console.error(err);
+        });
+        
+	</script>
+</body>
+
+</html>

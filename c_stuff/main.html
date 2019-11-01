@@ -1,0 +1,13 @@
+<body>Hello</body>
+<script src=polyfill.js></script>
+<script>
+    wasi_instantiateStreaming('main.wasm', { wasi_unstable: WASIPolyfill })
+//   fetch('main.wasm').then(response => 
+//   	response.arrayBuffer()
+//   ).then(bytes => 
+//     WebAssembly.instantiate(bytes, {})
+//   ).then(obj => {
+//       console.log(obj);
+//   });
+
+</script>
